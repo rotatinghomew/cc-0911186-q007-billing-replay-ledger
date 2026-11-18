@@ -22,8 +22,9 @@ class BaselineTest(unittest.TestCase):
         records = [{"business_key": "member-1", "kind": "upsert", "value": 3, "occurred_at": "2026-11-01T09:00:00"}]
         events = receive(self.connection, "enrollment", "batch-1", 1, records)
         self.assertEqual(apply_events(self.connection, events), 1)
+        # 同一批次重放、同一读数内容重送：幂等，不再次产生计费事实。
         repeated = receive(self.connection, "enrollment", "batch-1", 1, records)
-        self.assertEqual(apply_events(self.connection, repeated), 1)
+        self.assertEqual(apply_events(self.connection, repeated), 0)
         self.assertEqual(len(facts(self.connection)), 1)
         self.assertEqual(progress(self.connection)[0]["cursor"], 1)
 

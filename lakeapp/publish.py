@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+import hashlib
+
 from .storage import decode, encode, transaction
 
 
 def publish(connection, name: str, version: int, rows: list[dict]) -> None:
-    payload = {"rows": rows, "row_count": len(rows)}
+    body = encode(rows)
+    payload = {
+        "rows": rows,
+        "row_count": len(rows),
+        "digest": hashlib.sha256(body.encode("utf-8")).hexdigest(),
+    }
     with transaction(connection):
         connection.execute(
             "INSERT INTO manifests(name,version,payload,status) VALUES(?,?,?,?)",
